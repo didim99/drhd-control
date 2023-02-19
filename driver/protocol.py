@@ -4,7 +4,7 @@
 import ipaddress
 from ipaddress import IPv4Address
 
-from binutils import Binary, Byte, BWord, BDword, BaseStruct, hexify, Word
+from .binutils import Binary, Byte, BWord, BDword, BaseStruct, hexify, Word
 
 UDP_PORT = 30600
 TCP_PORT = 8000

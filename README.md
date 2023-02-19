@@ -5,7 +5,7 @@ HDMI 4x4 matrix over TCP/IP.
 
 ## Config file format
 
-Main script uses JSON file named `config.json` with
+[Test script](test.py) uses JSON file named `config.json` with
 following structure:
 
 ```json

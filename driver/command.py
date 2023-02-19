@@ -1,4 +1,4 @@
-from protocol import TCPPacket, Action, Command
+from .protocol import TCPPacket, Action, Command
 
 
 class CmdBuilder(object):

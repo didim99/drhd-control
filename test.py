@@ -2,9 +2,9 @@ import json
 import random
 from ipaddress import IPv4Address
 
-from discovery import NetworkExplorer
-from matrix import HDMIMatrix
-from protocol import UDPPacket, TCP_PORT
+from driver import HDMIMatrix
+from driver.discovery import NetworkExplorer
+from driver.protocol import UDPPacket, TCP_PORT
 
 
 class MatrixController(object):

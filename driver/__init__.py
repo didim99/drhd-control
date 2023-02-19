@@ -4,10 +4,10 @@ from ipaddress import IPv4Address
 from threading import Event
 from typing import Tuple, Dict
 
-from binutils import hexify
-from command import CmdBuilder
-from protocol import TCP_PACKET_LEN, TCPPacket
-from utils import SupportsLogging
+from .binutils import hexify
+from .command import CmdBuilder
+from .protocol import TCP_PACKET_LEN, TCPPacket
+from .utils import SupportsLogging
 
 
 class ProtocolError(Exception):

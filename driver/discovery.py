@@ -4,9 +4,8 @@ import time
 from threading import Event, Thread
 from typing import Callable, Union, SupportsBytes
 
-import protocol
-from protocol import UDPPacket
-from utils import SupportsLogging
+from .protocol import UDPPacket, UDP_PORT, DISCOVERY_REQUEST
+from .utils import SupportsLogging
 
 
 class NetworkExplorer(SupportsLogging):
@@ -68,7 +67,7 @@ class NetworkExplorer(SupportsLogging):
 
                 if not self._senderPaused:
                     self._logger.info(f"Sending broadcast ({count}) to: {self._broadcast}")
-                    self._socket.sendto(protocol.DISCOVERY_REQUEST, self._broadcast)
+                    self._socket.sendto(DISCOVERY_REQUEST, self._broadcast)
                     count += 1
 
             except socket.error as e:
@@ -107,13 +106,13 @@ class NetworkExplorer(SupportsLogging):
         self._socket.sendto(data, address)
 
     def _open_socket(self, ip: str) -> None:
-        self._broadcast = ('255.255.255.255', protocol.UDP_PORT)
+        self._broadcast = ('255.255.255.255', UDP_PORT)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         if hasattr(socket, 'SO_REUSEPORT'):
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         if hasattr(socket, 'SO_BROADCAST'):
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self._socket.bind((ip, protocol.UDP_PORT))
+        self._socket.bind((ip, UDP_PORT))
         self._logger.info(f"Broadcast socket open at: {self._socket.getsockname()}")
 
     def _dispatch_stop(self) -> bool:
