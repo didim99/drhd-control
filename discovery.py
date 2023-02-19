@@ -5,6 +5,7 @@ from threading import Event, Thread
 from typing import Callable
 
 import protocol
+from protocol import UDPPacket
 from utils import create_logger
 
 
@@ -20,11 +21,11 @@ class NetworkExplorer(object):
     _senderPaused: bool = False
     _stopEvent: Event = None
 
-    _listener: Callable[[bytes], None] = None
+    _listener: Callable[[UDPPacket], None] = None
     _broadcast: tuple = None
     _socket: socket = None
 
-    def __init__(self, listener: Callable[[bytes], None]):
+    def __init__(self, listener: Callable[[UDPPacket], None]):
         self._logger = create_logger(self._tag, logging.WARNING)
         self._stopEvent = Event()
         self._listener = listener
@@ -47,7 +48,7 @@ class NetworkExplorer(object):
 
                 if data:
                     self._logger.debug(f"Message received: {data}")
-                    self._listener(data)
+                    self._listener(UDPPacket(data))
 
                 count += 1
             except (EOFError, socket.error) as e:
