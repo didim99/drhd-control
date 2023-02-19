@@ -1,4 +1,6 @@
 import json
+import random
+from ipaddress import IPv4Address
 
 from discovery import NetworkExplorer
 from matrix import HDMIMatrix
@@ -20,7 +22,10 @@ class MatrixController(object):
 
     def on_device_found(self, data: UDPPacket):
         self.explorer.pause(True)
-        self.device = HDMIMatrix((data.devIP, TCP_PORT))
+        self.start_test(data.devIP)
+
+    def start_test(self, ip: IPv4Address):
+        self.device = HDMIMatrix((ip, TCP_PORT))
         self.device.logging(self.config.get("log_tcp", "warning"))
         self.device.connect()
         self.explorer.stop()
@@ -28,15 +33,23 @@ class MatrixController(object):
         self.device.disconnect()
 
     def test_matrix(self):
+        for i in range(self.device.num_out):
+            src = self.device.get_source_for(i + 1)
+        for i in range(self.device.num_out):
+            src = random.randint(1, 4)
+            self.device.set_port(src, i + 1)
         mapping = self.device.get_port_mapping()
-        print(f"--- Port mapping: {mapping} ---")
 
 
 def run():
     with open('./config.json', 'r') as file:
         config = json.load(file)
     controller = MatrixController(config)
-    controller.find()
+    if "dev_ip" in config:
+        controller.find()
+    else:
+        ip = IPv4Address(config['dev_ip'])
+        controller.start_test(ip)
 
 
 if __name__ == '__main__':
