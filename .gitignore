@@ -13,6 +13,8 @@ __pycache__/
 
 # Log files
 /log/
+*.dump
+*.bin
 
 # Cython compile output
 /build

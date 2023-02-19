@@ -11,3 +11,14 @@ def create_logger(name: str, level: Union[int, str]):
     logger.setLevel(level)
     logger.addHandler(handler)
     return logger
+
+
+class SupportsLogging(object):
+    _tag: str = "root"
+    _logger = None
+
+    def __init__(self, level: int):
+        self._logger = create_logger(self._tag, level)
+
+    def logging(self, level: str):
+        self._logger.setLevel(level.upper())

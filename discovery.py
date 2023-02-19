@@ -2,16 +2,15 @@ import logging
 import socket
 import time
 from threading import Event, Thread
-from typing import Callable
+from typing import Callable, Union, SupportsBytes
 
 import protocol
 from protocol import UDPPacket
-from utils import create_logger
+from utils import SupportsLogging
 
 
-class NetworkExplorer(object):
+class NetworkExplorer(SupportsLogging):
     _tag = 'explorer'
-    _logger = None
 
     _retry_count = 3
     _sender_delay = 2.0
@@ -26,7 +25,7 @@ class NetworkExplorer(object):
     _socket: socket = None
 
     def __init__(self, listener: Callable[[UDPPacket], None]):
-        self._logger = create_logger(self._tag, logging.WARNING)
+        super().__init__(logging.WARNING)
         self._stopEvent = Event()
         self._listener = listener
 
@@ -47,8 +46,9 @@ class NetworkExplorer(object):
                 self._logger.debug(f"Packet received from: {address}")
 
                 if data:
+                    data = UDPPacket(data)
                     self._logger.debug(f"Message received: {data}")
-                    self._listener(UDPPacket(data))
+                    self._listener(data)
 
                 count += 1
             except (EOFError, socket.error) as e:
@@ -97,6 +97,14 @@ class NetworkExplorer(object):
     def stop(self) -> None:
         self._logger.info("Stop event received")
         self._stopEvent.set()
+
+    def send(self, data: Union[bytes, SupportsBytes],
+             address: tuple) -> None:
+        if self._socket is None:
+            raise RuntimeError("Socket is None")
+        if type(data) is not bytes:
+            data = bytes(data)
+        self._socket.sendto(data, address)
 
     def _open_socket(self, ip: str) -> None:
         self._broadcast = ('255.255.255.255', protocol.UDP_PORT)

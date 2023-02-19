@@ -1,7 +1,9 @@
 # Original code by Daniel Brodie, modified by didim99
 # See: https://code.activestate.com/recipes/576666/
+
 import array
 import struct
+from typing import List, Tuple
 
 
 def hexify(data, sep=' ') -> str:
@@ -24,6 +26,8 @@ class BinaryMetaType(type):
 
 
 class BinaryType(metaclass=BinaryMetaType):
+    members: List[Tuple[str, type]]
+
     def __init__(self, **kwargs):
         self._kwargs = kwargs
 
@@ -158,7 +162,9 @@ class BaseStruct(object):
     _proto: BinaryType
     _rawValue: array
 
-    def __init__(self, data: array):
+    def __init__(self, data: array = None):
+        if data is None:
+            return
         _, parsed = self._proto.from_binary(data)
         self._rawValue = data
         self._fill(parsed)
@@ -166,3 +172,9 @@ class BaseStruct(object):
     def _fill(self, dictionary: dict):
         for k, v in dictionary.items():
             setattr(self, k, v)
+
+    def __bytes__(self):
+        data = {}
+        for k, _ in self._proto.members:
+            data[k] = getattr(self, k)
+        return self._proto.to_binary(data)

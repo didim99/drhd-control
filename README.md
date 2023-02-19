@@ -10,12 +10,16 @@ following structure:
 
 ```json
 {
-  "ip": "192.168.0.100"
+  "ip": "192.168.0.100",
+  "log_udp": "debug",
+  "log_tcp": "debug"
 }
 ```
 
 where:
 * `ip` (`string`) - local IP address to bind
+* `log_udp` (`string`) - logging level for UDP discovery
+* `log_tcp` (`string`) - logging level for TCP communication
 
 ## Protocol info
 
