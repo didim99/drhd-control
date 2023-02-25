@@ -28,7 +28,8 @@ class MatrixController(object):
         self.device = HDMIMatrix((ip, TCP_PORT))
         self.device.logging(self.config.get("log_tcp", "warning"))
         self.device.connect()
-        self.explorer.stop()
+        if self.explorer is not None:
+            self.explorer.stop()
         self.test_matrix()
         self.device.disconnect()
 
@@ -45,7 +46,7 @@ def run():
     with open('./config.json', 'r') as file:
         config = json.load(file)
     controller = MatrixController(config)
-    if "dev_ip" in config:
+    if "dev_ip" not in config:
         controller.find()
     else:
         ip = IPv4Address(config['dev_ip'])

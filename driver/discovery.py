@@ -42,6 +42,8 @@ class NetworkExplorer(SupportsLogging):
                     raise EOFError("socket is None")
                 self._logger.debug(f"Waiting for server reply ({count})")
                 data, address = self._socket.recvfrom(8192)
+                if data == DISCOVERY_REQUEST:
+                    continue  # ignore self-generated packets if we bound to 0.0.0.0
                 self._logger.debug(f"Packet received from: {address}")
 
                 if data:
