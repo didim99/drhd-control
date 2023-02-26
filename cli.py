@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import re
-from argparse import ArgumentParser, FileType, Namespace
+from argparse import ArgumentParser, FileType, Namespace, ArgumentTypeError
 from collections import namedtuple
 from ipaddress import IPv4Address
 
@@ -24,14 +24,14 @@ def out_ntoa(num: int) -> str:
 def validate_mac(value: str) -> str:
     value = value.lower()
     if not re.match("^[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", value):
-        raise ValueError(f'Invalid MAC address string: {value}')
+        raise ArgumentTypeError(f'Invalid MAC address string: {value}')
     return value.replace('-', ':')
 
 
 def validate_mapping(value: str) -> __mapping:
     value = value.upper()
-    if not re.match(f"^[A-Z0-9{__ALL}]:[0-9]$", value):
-        raise ValueError(f'Invalid mapping format: {value}')
+    if not re.match(f"^([A-Z{__ALL}]|[0-9]{{1,2}}):[0-9]{{1,2}}$", value):
+        raise ArgumentTypeError(f'Invalid mapping format: {value}')
     dst, src = value.split(':')
     if dst == __ALL:
         dst = __ALL_NUM
