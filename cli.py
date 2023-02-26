@@ -1,7 +1,43 @@
 #! /usr/bin/env python3
 
-from argparse import ArgumentParser, FileType
+import re
+from argparse import ArgumentParser, FileType, Namespace
+from collections import namedtuple
 from ipaddress import IPv4Address
+
+
+__mapping = namedtuple('mapping', ['src', 'dst'])
+
+__ALL = '*'
+__ALL_NUM = -1
+__FIRST_OUT = 'A'
+
+
+def out_aton(symbol: str) -> int:
+    return ord(symbol) - ord(__FIRST_OUT) + 1
+
+
+def out_ntoa(num: int) -> str:
+    return chr(ord(__FIRST_OUT) + num - 1)
+
+
+def validate_mac(value: str) -> str:
+    value = value.lower()
+    if not re.match("^[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", value):
+        raise ValueError(f'Invalid MAC address string: {value}')
+    return value.replace('-', ':')
+
+
+def validate_mapping(value: str) -> __mapping:
+    value = value.upper()
+    if not re.match(f"^[A-Z0-9{__ALL}]:[0-9]$", value):
+        raise ValueError(f'Invalid mapping format: {value}')
+    dst, src = value.split(':')
+    if dst == __ALL:
+        dst = __ALL_NUM
+    elif dst.isalpha():
+        dst = out_aton(dst)
+    return __mapping(int(src), int(dst))
 
 
 def create_cli() -> ArgumentParser:
@@ -33,7 +69,7 @@ def create_cli() -> ArgumentParser:
                               'no device MAC specified we will connect to first ' +
                               'responded device, what can be totally random due' +
                               'to UDP networking specifics')
-    dev_sel.add_argument('-M', '--device-mac', type=str, metavar='DEV_MAC',
+    dev_sel.add_argument('-M', '--device-mac', type=validate_mac, metavar='DEV_MAC',
                          help='device MAC address, if specified we will try ' +
                               'to find device with this MAC in local network')
 
@@ -62,20 +98,37 @@ def create_cli() -> ArgumentParser:
 
     control = commands.add_parser('control', help='manage device',
                                   parents=[network, connect])
-    control.add_argument('-m', '--map', type=str, nargs='+', metavar='O:I',
-                         required=True,
-                         help='map [I]nputs to [O]utputs, output numbers can be ' +
+    control.add_argument('-m', '--map', type=validate_mapping, metavar='O:I',
+                         required=True, nargs='+',
+                         help='map [O]utputs to [I]nputs, output numbers can be ' +
                               'present in both numerical and alphabetical format, ' +
-                              'output 1 is A, output 2 is B, etc. To map specific ' +
-                              'input to all outputs use * instead of output number, ' +
+                              'output 1 is A, output 2 is B, etc. To map specific input ' +
+                              f'to all outputs use {__ALL} instead of output number, ' +
                               'in this case only one mapping group should be specified')
 
     return parser
 
 
+def validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    if 'map' not in args:
+        return
+
+    outputs = []
+    group: __mapping
+    for group in args.map:
+        if group.dst == __ALL_NUM and len(args.map) > 1:
+            parser.error('Only one mapping group must be ' +
+                         f'specified when using {__ALL} as out number')
+        if group.dst in outputs:
+            dst = out_ntoa(group.dst)
+            parser.error(f'Duplicated mapping for output {dst} ({group.dst})')
+        outputs.append(group.dst)
+
+
 def main() -> None:
     parser = create_cli()
     args = parser.parse_args()
+    validate_args(args, parser)
     print(args)
 
 
