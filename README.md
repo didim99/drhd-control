@@ -10,18 +10,22 @@ following structure:
 
 ```json
 {
-  "ip": "192.168.0.100",
-  "dev_ip": "192.168.0.10",
+  "bind_to": "192.168.0.100",
+  "device": "192.168.0.10",
+  "device_mac": "ff:ff:ff:ff:ff:ff",
   "log_udp": "debug",
-  "log_tcp": "debug"
+  "log_tcp": "debug",
+  "num_req": 3
 }
 ```
 
 where:
-* `ip` (`string`) - local IP address to bind for discovery
-* `dev_ip` (`string`) - IP address of matrix (if known)
+* `bind_to` (`string`) - local IP address to bind for discovery
+* `device` (`string`) - IP address of matrix (if known)
+* `device_mac` (`string`) - MAC address of matrix (if IP can't be used)
 * `log_udp` (`string`) - logging level for UDP discovery
 * `log_tcp` (`string`) - logging level for TCP communication
+* `num_req` (`int`) - number of requests when scanning for devices
 
 ## Protocol info
 
