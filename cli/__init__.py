@@ -2,10 +2,11 @@ from argparse import ArgumentParser, FileType
 from ipaddress import IPv4Address
 from typing import List
 
-from config import validate_mac, validate_mapping, validate_args, CliConfig, __ALL, Command, out_ntoa
 from driver import HDMIMatrix
 from driver.discovery import NetworkExplorer
 from driver.protocol import UDPPacket, TCP_PORT
+from .config import validate_mac, validate_mapping, \
+    validate_args, CliConfig, __ALL, Command, out_ntoa
 
 
 class MatrixController(object):
