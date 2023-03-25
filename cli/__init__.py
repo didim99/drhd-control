@@ -15,8 +15,8 @@ class MatrixController(object):
     devices: List[UDPPacket] = None
     device: HDMIMatrix = None
 
-    def __init__(self, config: CliConfig):
-        self.config = config
+    def __init__(self, cfg: CliConfig):
+        self.config = cfg
         self.devices = []
 
     def start(self):
@@ -144,10 +144,10 @@ def main() -> None:
     args = parser.parse_args()
     validate_args(args, parser)
     try:
-        config = CliConfig(args)
+        cfg = CliConfig(args)
     except Exception as e:
         parser.error(str(e))
         exit()
 
-    controller = MatrixController(config)
+    controller = MatrixController(cfg)
     controller.start()
