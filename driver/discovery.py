@@ -53,6 +53,10 @@ class NetworkExplorer(SupportsLogging):
 
                 count += 1
             except (EOFError, socket.error) as e:
+                if self._stopEvent.is_set():
+                    break
+                if type(e) is socket.timeout:
+                    continue
                 self._logger.error(str(e))
                 time.sleep(self._sender_delay)
                 continue
@@ -73,9 +77,16 @@ class NetworkExplorer(SupportsLogging):
                     count += 1
 
             except socket.error as e:
-                self._logger.error(str(e))
+                if not self._stopEvent.is_set():
+                    self._logger.error(str(e))
             finally:
                 time.sleep(self._sender_delay)
+                if self._retry_count is not None \
+                        and count > self._retry_count:
+                    self.stop()
+
+    def retry_count(self, count: int):
+        self._retry_count = count if count > 0 else None
 
     def start(self, ip: str) -> None:
         self.pause(False)
@@ -114,6 +125,7 @@ class NetworkExplorer(SupportsLogging):
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         if hasattr(socket, 'SO_BROADCAST'):
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self._socket.settimeout(self._sender_delay)
         self._socket.bind((ip, UDP_PORT))
         self._logger.info(f"Broadcast socket open at: {self._socket.getsockname()}")
 

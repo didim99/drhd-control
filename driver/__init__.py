@@ -54,6 +54,11 @@ class HDMIMatrix(SupportsLogging):
         return reply.arg1
 
     def get_port_mapping(self) -> Dict[int, int]:
+        """
+        :returns dictionary that contains mapping between inputs and outputs
+                 where keys represents output numbers (starting from 1) and
+                 values represents corresponding input numbers.
+        """
         self._check_connection()
         mapping = {}
         for i in range(self.num_out):

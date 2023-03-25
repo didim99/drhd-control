@@ -69,6 +69,14 @@ class UDPPacket(BaseStruct):
         self.gwIP = ipaddress.ip_address(data['gwIP'])
         self.netMask = ipaddress.ip_address(data['netMask'])
 
+    def __eq__(self, other):
+        if type(other) is not UDPPacket:
+            raise NotImplemented
+        other: UDPPacket
+        return other.mac == self.mac \
+            and other.devIP == self.devIP \
+            and other.devPort == self.devPort
+
     def __repr__(self):
         mac = hexify(self.mac, ':')
         return f"MAC={mac}, IP={self.devIP}, GW={self.gwIP}," + \

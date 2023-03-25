@@ -7,7 +7,7 @@ from driver.discovery import NetworkExplorer
 from driver.protocol import UDPPacket, TCP_PORT
 
 
-class MatrixController(object):
+class MatrixTester(object):
     config: dict = None
     explorer: NetworkExplorer = None
     device: HDMIMatrix = None
@@ -45,7 +45,7 @@ class MatrixController(object):
 def run():
     with open('./config.json', 'r') as file:
         config = json.load(file)
-    controller = MatrixController(config)
+    controller = MatrixTester(config)
     if "dev_ip" not in config:
         controller.find()
     else:
