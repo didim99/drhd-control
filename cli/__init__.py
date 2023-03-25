@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 from argparse import ArgumentParser, FileType
 from ipaddress import IPv4Address
 from typing import List
@@ -152,7 +150,3 @@ def main() -> None:
 
     controller = MatrixController(config)
     controller.start()
-
-
-if __name__ == '__main__':
-    main()
