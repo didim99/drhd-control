@@ -1,43 +1,74 @@
 #! /usr/bin/env python3
 
-import re
-from argparse import ArgumentParser, FileType, Namespace, ArgumentTypeError
-from collections import namedtuple
+from argparse import ArgumentParser, FileType
 from ipaddress import IPv4Address
+from typing import List
+
+from config import validate_mac, validate_mapping, validate_args, CliConfig, __ALL, Command, out_ntoa
+from driver import HDMIMatrix
+from driver.discovery import NetworkExplorer
+from driver.protocol import UDPPacket, TCP_PORT
 
 
-__mapping = namedtuple('mapping', ['src', 'dst'])
+class MatrixController(object):
+    config: CliConfig = None
+    explorer: NetworkExplorer = None
+    devices: List[UDPPacket] = None
+    device: HDMIMatrix = None
 
-__ALL = '*'
-__ALL_NUM = -1
-__FIRST_OUT = 'A'
+    def __init__(self, config: CliConfig):
+        self.config = config
+        self.devices = []
 
+    def start(self):
+        if self.config.command is Command.Scan \
+                or self.config.device is None:
+            self.start_explorer()
+        else:
+            self.run_command(self.config.device)
 
-def out_aton(symbol: str) -> int:
-    return ord(symbol) - ord(__FIRST_OUT) + 1
+    def start_explorer(self):
+        self.explorer = NetworkExplorer(self.on_device_found)
+        self.explorer.logging(self.config.log_udp)
+        self.explorer.retry_count(self.config.num_req)
+        self.explorer.start(str(self.config.bind_to))
 
+    def on_device_found(self, data: UDPPacket) -> None:
+        if self.config.command is Command.Scan:
+            if data not in self.devices:
+                print(data)
+            self.devices.append(data)
+            return
 
-def out_ntoa(num: int) -> str:
-    return chr(ord(__FIRST_OUT) + num - 1)
+        if self.config.device_mac is not None \
+                and data.mac.lower() != self.config.device_mac.lower():
+            return
 
+        self.explorer.stop()
+        self.run_command(data.devIP)
 
-def validate_mac(value: str) -> str:
-    value = value.lower()
-    if not re.match("^[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", value):
-        raise ArgumentTypeError(f'Invalid MAC address string: {value}')
-    return value.replace('-', ':')
+    def run_command(self, addr: IPv4Address):
+        self.device = HDMIMatrix((addr, TCP_PORT))
+        self.device.logging(self.config.log_tcp)
+        self.device.connect()
 
+        if self.config.command is Command.Status:
+            self.query_status()
+        elif self.config.command is Command.Control:
+            self.setup_device()
 
-def validate_mapping(value: str) -> __mapping:
-    value = value.upper()
-    if not re.match(f"^([A-Z{__ALL}]|[0-9]{{1,2}}):[0-9]{{1,2}}$", value):
-        raise ArgumentTypeError(f'Invalid mapping format: {value}')
-    dst, src = value.split(':')
-    if dst == __ALL:
-        dst = __ALL_NUM
-    elif dst.isalpha():
-        dst = out_aton(dst)
-    return __mapping(int(src), int(dst))
+        self.device.disconnect()
+
+    def query_status(self):
+        mapping = self.device.get_port_mapping()
+        outputs = [out_ntoa(o) for o in mapping.keys()]
+        inputs = list(mapping.values())
+
+        print(outputs)
+        print(inputs)
+
+    def setup_device(self):
+        pass
 
 
 def create_cli() -> ArgumentParser:
@@ -109,27 +140,18 @@ def create_cli() -> ArgumentParser:
     return parser
 
 
-def validate_args(args: Namespace, parser: ArgumentParser) -> None:
-    if 'map' not in args:
-        return
-
-    outputs = []
-    group: __mapping
-    for group in args.map:
-        if group.dst == __ALL_NUM and len(args.map) > 1:
-            parser.error('Only one mapping group must be ' +
-                         f'specified when using {__ALL} as out number')
-        if group.dst in outputs:
-            dst = out_ntoa(group.dst)
-            parser.error(f'Duplicated mapping for output {dst} ({group.dst})')
-        outputs.append(group.dst)
-
-
 def main() -> None:
     parser = create_cli()
     args = parser.parse_args()
     validate_args(args, parser)
-    print(args)
+    try:
+        config = CliConfig(args)
+    except Exception as e:
+        parser.error(str(e))
+        exit()
+
+    controller = MatrixController(config)
+    controller.start()
 
 
 if __name__ == '__main__':
