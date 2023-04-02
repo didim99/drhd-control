@@ -1,17 +1,23 @@
 import logging
 import socket
+from enum import Enum
 from ipaddress import IPv4Address
 from threading import Event
 from typing import Tuple, Dict
 
 from .binutils import hexify
 from .command import CmdBuilder
-from .protocol import TCP_PACKET_LEN, TCPPacket
+from .protocol import TCP_PACKET_LEN, PORT_CONNECTED, TCPPacket
 from .utils import SupportsLogging
 
 
 class ProtocolError(Exception):
     pass
+
+
+class PortType(Enum):
+    Input = "input"
+    Output = "output"
 
 
 class HDMIMatrix(SupportsLogging):
@@ -52,6 +58,38 @@ class HDMIMatrix(SupportsLogging):
         reply = self._read_packet()
         self._logger.info(f"Port mapping: {reply.arg1} -> {reply.arg2}")
         return reply.arg1
+
+    def get_input_status(self, in_port: int) -> bool:
+        """:returns True if port is connected, otherwise false"""
+        return self.get_port_status(in_port, PortType.Input)
+
+    def get_output_status(self, out_port: int) -> bool:
+        """:returns True if port is connected (HPD signal present), otherwise false"""
+        return self.get_port_status(out_port, PortType.Output)
+
+    def get_port_status(self, port: int, _type: PortType) -> bool:
+        self._check_connection()
+        cmd = CmdBuilder.input_status if _type is PortType.Input \
+            else CmdBuilder.output_status
+        self._send_packet(cmd(port))
+        reply = self._read_packet()
+        connected = reply.arg2 == PORT_CONNECTED
+        status = "connected" if connected else "not connected"
+        self._logger.info(f"{_type.value.capitalize()} {reply.arg1} is {status}")
+        return connected
+
+    def get_inputs_status(self) -> Dict[int, bool]:
+        return self.get_ports_status(PortType.Input)
+
+    def get_outputs_status(self) -> Dict[int, bool]:
+        return self.get_ports_status(PortType.Output)
+
+    def get_ports_status(self, _type: PortType) -> Dict[int, bool]:
+        count = self.num_in if _type is PortType.Input else self.num_out
+        res = {}
+        for i in range(count):
+            res[i + 1] = self.get_port_status(i + 1, _type)
+        return res
 
     def get_port_mapping(self) -> Dict[int, int]:
         """

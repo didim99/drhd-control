@@ -35,11 +35,14 @@ class MatrixTester(object):
 
     def test_matrix(self):
         for i in range(self.device.num_out):
-            src = self.device.get_source_for(i + 1)
+            self.device.get_source_for(i + 1)
+            self.device.get_output_status(i + 1)
+        for i in range(self.device.num_in):
+            self.device.get_input_status(i + 1)
         for i in range(self.device.num_out):
             src = random.randint(1, 4)
             self.device.map_port(src, i + 1)
-        mapping = self.device.get_port_mapping()
+        self.device.get_port_mapping()
 
 
 def run():

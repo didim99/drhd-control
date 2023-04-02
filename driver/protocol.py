@@ -2,6 +2,7 @@
 # See: https://github.com/seanwatson/hdmi-matrix-controller/
 
 import ipaddress
+import struct
 from ipaddress import IPv4Address
 
 from .binutils import Binary, Byte, BWord, BDword, BaseStruct, hexify, Word
@@ -19,6 +20,7 @@ _TCP_TAIL = b'\x00' * 4
 _CRC_BASE = 0x100
 
 ALL_PORTS = 0x00
+PORT_CONNECTED = 0x00
 
 
 class Command(object):
@@ -72,6 +74,7 @@ class BeepState(object):
 
 
 def calc_crc(data) -> int:
+    data = struct.unpack(f"{len(data)}b", data)
     crc = _CRC_BASE - sum(data)
     if crc < 0:
         while crc < 0:

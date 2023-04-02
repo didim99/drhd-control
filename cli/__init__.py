@@ -61,21 +61,48 @@ class MatrixController(object):
 
     def _query_status(self) -> None:
         mapping = self.device.get_port_mapping()
+        inputs = self.device.get_inputs_status()
+        outputs = self.device.get_outputs_status()
+
         conv = str if self.config.numeric else out_ntoa
         mapping = {conv(o): i for o, i in mapping.items()}
+        inputs = {str(o): s for o, s in inputs.items()}
+        outputs = {conv(o): s for o, s in outputs.items()}
+
         if self.config.json:
-            res = {"mapping": mapping}
+            res = {"mapping": mapping,
+                   "inputs": inputs,
+                   "outputs": outputs}
             print(json.dumps(res))
             return
 
-        inputs = "  IN:"
-        outputs = " OUT:"
+        sconv = lambda s: "+" if s else "-"
+        inputs = {o: sconv(s) for o, s in inputs.items()}
+        outputs = {o: sconv(s) for o, s in outputs.items()}
+
+        fmt_start = "{:>6s}"
+        str_in = fmt_start.format("IN:")
+        str_out = fmt_start.format("OUT:")
+        str_name = fmt_start.format("") + " PORT MAPPING"
         for o, i in mapping.items():
-            outputs += f" {o:<2s}"
-            inputs += f" {i:<2d}"
+            str_out += f" {o:>2s}"
+            str_in += f" {i:>2d}"
+
+        _len = max(len(str_out), len(str_in), len(str_name)) + 3
+        str_name = str_name.ljust(_len)
+        str_out = str_out.ljust(_len)
+        str_in = str_in.ljust(_len)
+        str_name += " CONNECTION STATUS"
+
+        for o, s in outputs.items():
+            str_out += f" {o:>2s}: {s}"
+        for o, s in inputs.items():
+            str_in += f" {o:>2s}: {s}"
+
         print()
-        print(outputs)
-        print(inputs)
+        print(str_name)
+        print(str_out)
+        print(str_in)
         print()
 
     def _control_device(self) -> None:
