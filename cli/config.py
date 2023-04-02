@@ -1,17 +1,19 @@
+from __future__ import annotations
+
 import json
 import re
 from argparse import Namespace, ArgumentTypeError, ArgumentParser
 from collections import namedtuple
 from enum import Enum
 from ipaddress import IPv4Address
-from typing import Callable
+from typing import Callable, List
 
 
 __mapping = namedtuple('mapping', ['src', 'dst'])
 
 __ALL = '*'
-__ALL_NUM = -1
 __FIRST_OUT = 'A'
+ALL_NUM = -1
 
 
 def out_aton(symbol: str) -> int:
@@ -35,7 +37,7 @@ def validate_mapping(value: str) -> __mapping:
         raise ArgumentTypeError(f'Invalid mapping format: {value}')
     dst, src = value.split(':')
     if dst == __ALL:
-        dst = __ALL_NUM
+        dst = ALL_NUM
     elif dst.isalpha():
         dst = out_aton(dst)
     return __mapping(int(src), int(dst))
@@ -48,7 +50,7 @@ def validate_args(args: Namespace, parser: ArgumentParser) -> None:
     outputs = []
     group: __mapping
     for group in args.map:
-        if group.dst == __ALL_NUM and len(args.map) > 1:
+        if group.dst == ALL_NUM and len(args.map) > 1:
             parser.error('Only one mapping group must be ' +
                          f'specified when using {__ALL} as out number')
         if group.dst in outputs:
@@ -73,7 +75,7 @@ class CliConfig(object):
     device_mac: str = None
     numeric: bool = None
     json: bool = None
-    map = None
+    map: List[__mapping] = None
 
     def __init__(self, args: Namespace):
         args = vars(args)

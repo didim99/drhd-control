@@ -18,17 +18,57 @@ _TCP_TAIL = b'\x00' * 4
 
 _CRC_BASE = 0x100
 
+ALL_PORTS = 0x00
+
 
 class Command(object):
     Status = 0x01
     Port = 0x02
     EDID = 0x03
+    Setup = 0x06
 
 
 class Action(object):
+    class Status(object):
+        Input = 0x04
+        Output = 0x05
+        Beeper = 0x0b
+
     class Port(object):
         Query = 0x01
         Set = 0x03
+
+    class EDID(object):
+        Set = 0x02
+        SetAll = 0x01
+        Copy = 0x04
+        CopyAll = 0x03
+
+    class Setup(object):
+        Beeper = 0x01
+
+
+class EDID(object):
+    V1080I_A20 = 0x01
+    V1080I_A51 = 0x02
+    V1080I_A71 = 0x03
+    V1080P_A20 = 0x04
+    V1080P_A51 = 0x05
+    V1080P_A71 = 0x06
+    V3D_A20 = 0x07
+    V3D_A51 = 0x08
+    V3D_A71 = 0x09
+    V4K2K_A20 = 0x0A
+    V4K2K_A51 = 0x0B
+    V4K2K_A71 = 0x0C
+    DVI_1024_768 = 0x0D
+    DVI_1920_1080 = 0x0E
+    DVI_1920_1200 = 0x0F
+
+
+class BeepState(object):
+    Off = 0xf0
+    On = 0x0f
 
 
 def calc_crc(data) -> int:

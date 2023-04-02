@@ -46,9 +46,9 @@ class HDMIMatrix(SupportsLogging):
         self._connected.clear()
         self._logger.info("Disconnected")
 
-    def get_source_for(self, out: int) -> int:
+    def get_source_for(self, out_port: int) -> int:
         self._check_connection()
-        self._send_packet(CmdBuilder.query_port(out))
+        self._send_packet(CmdBuilder.query_port(out_port))
         reply = self._read_packet()
         self._logger.info(f"Port mapping: {reply.arg1} -> {reply.arg2}")
         return reply.arg1
@@ -62,18 +62,22 @@ class HDMIMatrix(SupportsLogging):
         self._check_connection()
         mapping = {}
         for i in range(self.num_out):
-            self._send_packet(CmdBuilder.query_port(i+1))
+            self._send_packet(CmdBuilder.query_port(i + 1))
             reply = self._read_packet()
             mapping[reply.arg1] = reply.arg2
         self._logger.info(f"Port mapping: {mapping}")
         return mapping
 
-    def set_port(self, src: int, dst: int):
-        self._send_packet(CmdBuilder.set_port(src, dst))
+    def map_port(self, in_port: int, out_port: int):
+        self._send_packet(CmdBuilder.map_port(in_port, out_port))
         reply = self._read_packet()
-        if reply.arg2 != dst:
-            raise ProtocolError(f"Invalid response, expected {dst}, got {reply.arg2}")
-        self._logger.info(f"Set port mapping: {src} -> {dst}")
+        if reply.arg2 != out_port:
+            raise ProtocolError(f"Invalid response, expected {out_port}, got {reply.arg2}")
+        self._logger.info(f"Set port mapping: {in_port} -> {out_port}")
+
+    def map_all(self, in_port: int):
+        for i in range(self.num_out):
+            self.map_port(in_port, i + 1)
 
     def _check_connection(self) -> None:
         if not self._connected.is_set():

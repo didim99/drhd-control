@@ -55,7 +55,7 @@ class MatrixController(object):
         if self.config.command is Command.Status:
             self.query_status()
         elif self.config.command is Command.Control:
-            self.setup_device()
+            self.control_device()
 
         self.device.disconnect()
 
@@ -78,8 +78,12 @@ class MatrixController(object):
         print(inputs)
         print()
 
-    def setup_device(self) -> None:
-        pass
+    def control_device(self) -> None:
+        for mapping in self.config.map:
+            if mapping.dst == config.ALL_NUM:
+                self.device.map_all(mapping.src)
+                return
+            self.device.map_port(mapping.src, mapping.dst)
 
 
 def create_cli() -> ArgumentParser:

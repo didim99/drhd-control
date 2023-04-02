@@ -38,7 +38,7 @@ class MatrixTester(object):
             src = self.device.get_source_for(i + 1)
         for i in range(self.device.num_out):
             src = random.randint(1, 4)
-            self.device.set_port(src, i + 1)
+            self.device.map_port(src, i + 1)
         mapping = self.device.get_port_mapping()
 
 
