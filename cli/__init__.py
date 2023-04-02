@@ -1,3 +1,4 @@
+import json
 from argparse import ArgumentParser, FileType
 from ipaddress import IPv4Address
 from typing import List
@@ -58,15 +59,26 @@ class MatrixController(object):
 
         self.device.disconnect()
 
-    def query_status(self):
+    def query_status(self) -> None:
         mapping = self.device.get_port_mapping()
-        outputs = [out_ntoa(o) for o in mapping.keys()]
-        inputs = list(mapping.values())
+        conv = str if self.config.numeric else out_ntoa
+        mapping = {conv(o): i for o, i in mapping.items()}
+        if self.config.json:
+            res = {"mapping": mapping}
+            print(json.dumps(res))
+            return
 
+        inputs = "  IN:"
+        outputs = " OUT:"
+        for o, i in mapping.items():
+            outputs += f" {o:<2s}"
+            inputs += f" {i:<2d}"
+        print()
         print(outputs)
         print(inputs)
+        print()
 
-    def setup_device(self):
+    def setup_device(self) -> None:
         pass
 
 
@@ -109,14 +121,14 @@ def create_cli() -> ArgumentParser:
                          help='bind to specific IP address instead of %(default)s ' +
                               'when scanning for devices, useful when you want ' +
                               'to scan only specific network interface')
+    network.add_argument('-r', '--num-req', type=int, metavar='NUM', default=3,
+                         help='number of requests sent to network, ' +
+                              'default is %(default)s')
 
     commands = parser.add_subparsers(dest='command', metavar='COMMAND',
                                      required=True, title='possible commands')
     scan = commands.add_parser('scan', help='scan local network for devices',
                                parents=[network])
-    scan.add_argument('-n', '--num-req', type=int, metavar='NUM', default=3,
-                      help='number of requests sent to network, ' +
-                      'default is %(default)s')
 
     status = commands.add_parser('status', help='query device status',
                                  parents=[network, connect])

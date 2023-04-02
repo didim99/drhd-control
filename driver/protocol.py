@@ -55,16 +55,17 @@ class _UDPPacket(metaclass=Binary):
 class UDPPacket(BaseStruct):
     _proto = _UDPPacket
 
-    mac: bytes
-    devIP: IPv4Address
-    gwIP: IPv4Address
-    netMask: IPv4Address
-    devPort: int
-    const1: int
-    res: bytes
+    mac: str = None
+    devIP: IPv4Address = None
+    gwIP: IPv4Address = None
+    netMask: IPv4Address = None
+    devPort: int = None
+    const1: int = None
+    res: bytes = None
 
     def _fill(self, data: dict):
         super()._fill(data)
+        self.mac = hexify(self.mac, ':')
         self.devIP = ipaddress.ip_address(data['devIP'])
         self.gwIP = ipaddress.ip_address(data['gwIP'])
         self.netMask = ipaddress.ip_address(data['netMask'])
@@ -78,8 +79,7 @@ class UDPPacket(BaseStruct):
             and other.devPort == self.devPort
 
     def __repr__(self):
-        mac = hexify(self.mac, ':')
-        return f"MAC={mac}, IP={self.devIP}, GW={self.gwIP}," + \
+        return f"MAC={self.mac}, IP={self.devIP}, GW={self.gwIP}," + \
             f" MASK={self.netMask}, PORT={self.devPort}"
 
 
