@@ -23,17 +23,17 @@ class MatrixController(object):
     def start(self):
         if self.config.command is Command.Scan \
                 or self.config.device is None:
-            self.start_explorer()
+            self._start_explorer()
         else:
-            self.run_command(self.config.device)
+            self._run_command(self.config.device)
 
-    def start_explorer(self):
-        self.explorer = NetworkExplorer(self.on_device_found)
+    def _start_explorer(self):
+        self.explorer = NetworkExplorer(self._on_device_found)
         self.explorer.logging(self.config.log_udp)
         self.explorer.retry_count(self.config.num_req)
         self.explorer.start(str(self.config.bind_to))
 
-    def on_device_found(self, data: UDPPacket) -> None:
+    def _on_device_found(self, data: UDPPacket) -> None:
         if self.config.command is Command.Scan:
             if data not in self.devices:
                 print(data)
@@ -45,21 +45,21 @@ class MatrixController(object):
             return
 
         self.explorer.stop()
-        self.run_command(data.devIP)
+        self._run_command(data.devIP)
 
-    def run_command(self, addr: IPv4Address):
+    def _run_command(self, addr: IPv4Address):
         self.device = HDMIMatrix((addr, TCP_PORT))
         self.device.logging(self.config.log_tcp)
         self.device.connect()
 
         if self.config.command is Command.Status:
-            self.query_status()
+            self._query_status()
         elif self.config.command is Command.Control:
-            self.control_device()
+            self._control_device()
 
         self.device.disconnect()
 
-    def query_status(self) -> None:
+    def _query_status(self) -> None:
         mapping = self.device.get_port_mapping()
         conv = str if self.config.numeric else out_ntoa
         mapping = {conv(o): i for o, i in mapping.items()}
@@ -78,7 +78,7 @@ class MatrixController(object):
         print(inputs)
         print()
 
-    def control_device(self) -> None:
+    def _control_device(self) -> None:
         for mapping in self.config.map:
             if mapping.dst == config.ALL_NUM:
                 self.device.map_all(mapping.src)
